@@ -1,0 +1,23 @@
+09/06/2011 Version 0.1
+
+Taken from http://info.iet.unipi.it/~luigi/kindle/index.php#standalone-kindle-terminal
+With a bug-fix from mobileread.com and a patch to make it fullscreen.
+
+Thanks to those, especially luigi.
+
+At initial commit the following changes have been made:
+
+	-The http terminal code removed
+	-Hack to make it run a login shell (pull in profile etc)
+
+First steps TODO:
+	-accept path to config files as arguments to make /bin /etc structure possible
+	-improve terminal support, specifically wrapping.
+	-Pull in supporting code, screen, corkscrew, plink and/or ssh and/or working dbclient, profile changes init script
+	-sshagent
+	
+
+Down the road:
+	-separate the terminal from launchpad, i.e. run from seperate launchpad.
+	-package.
+

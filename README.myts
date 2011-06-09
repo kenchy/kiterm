@@ -1,0 +1,170 @@
+kiterm -- A kindle (or browser) based terminal
+
+This package, kiterm, is made of three components:
+
+
+1. an application launcher for the kindle, which intercepts
+  hotkey sequences and can run commands. This is compatible
+  with the 'launchpad' program.
+
+3. a terminal for the kindle, which uses the two parts above,
+  and simple framebuffer routines, to run a full terminal.
+
+3. a rewritten version of the AjaxTerm program, which permits
+  shell access through a browser just using Javascript.
+  This part is present only for historical reasons.
+
+To use the program, you are expected to have shell access
+to the kindle, and then:
+- copy 'myts.arm, launchpad.ini and keydefs.ini' on the kindle
+  all in the same directory;
+- edit the 'launchpad.ini' to adapt it to your needs;
+- launch the program in background, e.g. "./myts.arm &"
+
+The program intercepts keypresses, and upon some of the
+hotkey sequences defined in launchpad.ini it executes
+relevant actions.
+
+Among these, you can define "!terminal xxx" actions,
+where xxx are arbitrary strings. In this case, launchpad
+will launch a new shell window named xxx (or reconnect to
+an existing one if any) and present a terminal window
+on the screen.
+
+To exit from a terminal press "Left<" (page back on the
+top left ; this is configurable).
+
+The keyboard is mapped as follows:
+
+	A..Z, space, ., DEL, ENTER	as their label
+	ALT+Q..P	digits
+
+	Left>		ESC
+	Left<		exit from terminal mode
+
+	Shift		acts as "shift"
+	Aa		acts as "control"
+
+	BACK	special keys, as follows (same layout
+		as on a regular key; use shift fo
+
+	key	BACK	BACK+SHIFT
+
+	q	`	~
+	a	TAB	backtab
+	z	<	>
+	u	-	_
+	i	=	+
+	o	[	{
+	p	]	}
+	k	;	:
+	l	'	"
+	DEL	\	|
+	.	,	<
+	sym	.	>
+	enter	/	?
+
+	~`
+
+	5way Arrows		arrow keys
+	5way up/dn+shift	PgUp/PgDown
+
+The font is 8x16 cp437 taken from freebsd.
+As is it fits 75 columns. To get 80 columns we need
+to use a 7px font (too much ?) or implement
+horizontal scrolling.
+
+!~   @    #    $    %    ^    &_   *+   ({   )}
+1`   2    3    4    5    6    7-   8=   9[   0]
+
+<--                                 :    "     |
+A ->                               K;   L'  del\
+
+ >                                  <    >    ?
+Z<                                 .,  Sy.  En/
+
+--- Web-based interface ----
+
+This part is there only for historical reasons or if you
+want to have shell access using an external browser.
+
+KiTerm uses some simple javascript on the client to access a
+server in charge of forking shells (and keeping them alive)
+and pass tty data across the HTTP connection.
+This approach is especially useful on the kindle, where
+running an xterm or a shell in console mode is challenging.
+Instead, the browser can be used for this.
+
+The original AjaxTerm used a Python script, with the usual bloat
+of libraries, to implement the backend.
+I have completely reimplemented the backend in C, using a
+single process that handles multiple connections and forks
+shells as desired.
+The javascript has also been heavily simplified, removing
+unnecessary libraries.
+
+The tarball includes:
++ this README
++ myts.c			source code for the server
++ dynstring.[ch]		my library for dynamic strings
++ myts.arm			the server compiled for the kindle
++ ajaxterm.{html,js,css},	html files
+
+To use the program you must run the server from the directory where
+the javascript files are, and then launch a browser to
+
+	 http://localhost:8022/
+
+On the kindle, ALT maps to CTRL, and the ESC key is the
+"page back" key on the left of the screen. Similar mappings
+should be necessary on handheld devices.
+
+PROTOCOL
+
+The protocol is very simple -- requests have the form
+	/u?s=xxx&c=1&r=1&w=NN&h=NN&k=...
+where s (mandatory) is the session id (alpha chars),
+w and h represent the geometry (only used when creating a new terminal),
+k (optional) contains keypresses.
+c (optional) is set when requesting color output, XXX unimplemented
+r (optional) forces a refresh XXX unimplemented
+
+The response is XML/UTF8 consisting of a <idem></idem>block if
+no updates are available, or <pre>...</pre> with the entire
+screen dump if something has changed. Colors (including the cursor)
+are implemented by <span class="fX bY">...</span> where X and Y are
+the foreground and background colors.
+
+TODO:
+At this stage the program is still a bit experimental in that it
+still needs work on two areas, namely process management
+and terminal emulation. In particular:
+
+    + complete ANSI control code emulation
+	not all ANSI sequences are recognised, though
+	most things work (top, vi, ...). The missing sequences
+	mostly refer to color handling.
+
+    + reconnect to existing sessions
+	at the moment each session uses a random key so
+	if the browser dies or disconnects, you cannot
+	reach the existing session anymore
+
+    + session termination
+	shells remain alive until the server terminates.
+	I should implement a way to explicitly kill
+	a session or connect to one of the existing ones.
+
+    + resource limiting
+	should expire sessions for which we do not receive
+	a connection for more than some time (minutes?)
+	Should also prevent more than M sessions from the same IP
+
+=== References ===
+
+http://antony.lesuisse.org/software/ajaxterm/
+
+wget http://antony.lesuisse.org/ajaxterm/files/Ajaxterm-0.10.tar.gz
+    tar zxvf Ajaxterm-0.10.tar.gz
+    cd Ajaxterm-0.10
+    ./ajaxterm.py
